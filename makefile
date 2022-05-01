@@ -1,7 +1,16 @@
 SHELL := /bin/bash
 
+# ==============================================================================
+# Testing running system
+
+# expvarmon -ports=":4000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
+
 run:
-	go run main.go
+	go run app/services/sales-api/main.go | go run app/tooling/logfmt/main.go
+
+tidy:
+	go mod tidy
+	go mod vendor
 
 # ==============================================================================
 # Building containers
@@ -35,11 +44,12 @@ kind-down:
 	kind delete cluster --name $(KIND_CLUSTER)
 
 kind-load:
-	cd zarf/k8s/kind/sales-pod; kustomize edit set image sales-api-images=sales-api-amd64:${VERSION}
+	cd zarf/k8s/kind/sales-pod; kustomize edit set image sales-api-image=sales-api-amd64:$(VERSION)
 	kind load docker-image sales-api-amd64:$(VERSION) --name $(KIND_CLUSTER)
+	
 
 kind-apply:
-	kustomize build zarf/k8s/kind/sales-pod/ | kubectl apply -f -
+	kustomize build zarf/k8s/kind/sales-pod | kubectl apply -f -
 
 kind-status:
 	kubectl get nodes -o wide
@@ -51,7 +61,7 @@ kind-status-sales:
 
 
 kind-logs:
-	kubectl logs -l app=sales --all-containers=true -f --tail=100 
+	kubectl logs -l app=sales --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
 
 kind-restart:
 	kubectl rollout restart deployment sales-pod 
