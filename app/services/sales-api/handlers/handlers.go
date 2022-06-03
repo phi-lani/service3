@@ -7,8 +7,10 @@ import (
 	"net/http/pprof"
 	"os"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/phi-lani/service3/app/services/sales-api/handlers/debug/checkgrp"
 	"github.com/phi-lani/service3/app/services/sales-api/handlers/v1/testgrp"
+	"github.com/phi-lani/service3/business/sys/auth"
 	"github.com/phi-lani/service3/business/web/mid"
 	"github.com/phi-lani/service3/foundation/web"
 	"go.uber.org/zap"
@@ -36,13 +38,14 @@ func DebugStandardLibraryMux() *http.ServeMux {
 // debug application routes for the service. This bypassing the use of the
 // DefaultServerMux. Using the DefaultServerMux would be a security risk since
 // a dependency could inject a handler into our service without us knowing it.
-func DebugMux(build string, log *zap.SugaredLogger) http.Handler {
+func DebugMux(build string, log *zap.SugaredLogger, db *sqlx.DB) http.Handler {
 	mux := DebugStandardLibraryMux()
 
 	// Register debug check endpoints.
 	cgh := checkgrp.Handlers{
 		Build: build,
 		Log:   log,
+		DB:    db,
 	}
 	mux.HandleFunc("/debug/readiness", cgh.Readiness)
 	mux.HandleFunc("/debug/liveness", cgh.Liveness)
@@ -54,6 +57,8 @@ func DebugMux(build string, log *zap.SugaredLogger) http.Handler {
 type APIMuxConfig struct {
 	Shutdown chan os.Signal
 	Log      *zap.SugaredLogger
+	Auth     *auth.Auth
+	DB       *sqlx.DB
 }
 
 // APIMux constructs a http.Handler with all application routes defined.
@@ -61,6 +66,8 @@ func APIMux(cfg APIMuxConfig) *web.App {
 	app := web.NewApp(
 		cfg.Shutdown,
 		mid.Logger(cfg.Log),
+		mid.Errors(cfg.Log),
+		mid.Panics(),
 	)
 	v1(app, cfg)
 	return app
@@ -72,4 +79,6 @@ func v1(app *web.App, cfg APIMuxConfig) {
 		Log: cfg.Log,
 	}
 	app.Handle(http.MethodGet, version, "/test", tgh.Test)
+	app.Handle(http.MethodGet, version, "/testauth", tgh.Test, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
+
 }

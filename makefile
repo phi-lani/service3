@@ -5,9 +5,27 @@ SHELL := /bin/bash
 
 # expvarmon -ports=":4000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
 
+#Testing auth
+#curl -il  http://localhost:3000/v1/testauth
+#curl -il -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/testauth
+
+# To generate a private/public key PEM file.
+# openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
+# openssl rsa -pubout -in private.pem -out public.pem
+
 run:
 	go run app/services/sales-api/main.go | go run app/tooling/logfmt/main.go
 
+admin: 
+	go run app/tooling/admin/main.go
+
+# ==============================================================================
+# Running tests within the local computer
+
+test: 
+	go test ./...  -count=1
+	staticcheck -checks=all ./...
+	
 tidy:
 	go mod tidy
 	go mod vendor
@@ -49,6 +67,8 @@ kind-load:
 	
 
 kind-apply:
+	kustomize build zarf/k8s/kind/database-pod | kubectl apply -f -
+	kubectl wait --namespace=database-system --timeout=120s --for=condition=Available deployment/database-pod
 	kustomize build zarf/k8s/kind/sales-pod | kubectl apply -f -
 
 kind-status:
@@ -58,6 +78,9 @@ kind-status:
 
 kind-status-sales:
 	kubectl get pods -o wide --watch 
+
+kind-status-db:
+	kubectl get pods -o wide --watch --namespace=database-system
 
 
 kind-logs:
