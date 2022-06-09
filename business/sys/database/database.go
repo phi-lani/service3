@@ -18,10 +18,11 @@ import (
 
 // Set of error variables for CRUD operations
 var (
-	ErrNotFound       = errors.New("not Found")
-	ErrInvalidID      = errors.New("ID is not in its proper form")
-	ErrAuthentication = errors.New("authetication failed")
-	ErrForbidden      = errors.New("attempted action is allowed")
+	ErrNotFound              = errors.New("not Found")
+	ErrInvalidID             = errors.New("ID is not in its proper form")
+	ErrAuthenticationFailure = errors.New("authetication failed")
+	ErrForbidden             = errors.New("attempted action is allowed")
+	ErrInvalidEmail          = errors.New("email not valid")
 )
 
 // Config is the required properties to use the database.

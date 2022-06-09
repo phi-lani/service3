@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/phi-lani/service3/business/sys/database/database"
+	"github.com/phi-lani/service3/business/sys/database"
 	"go.uber.org/zap"
 )
 
