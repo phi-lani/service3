@@ -13,6 +13,9 @@ SHELL := /bin/bash
 # openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
 # openssl rsa -pubout -in private.pem -out public.pem
 
+#DBlab call
+#dblab --host 0.0.0.0 --user postgres --db postgres --pass postgres --ssl disable --port 5432 --driver postgres
+
 run:
 	go run app/services/sales-api/main.go | go run app/tooling/logfmt/main.go
 
@@ -68,7 +71,7 @@ kind-load:
 
 kind-apply:
 	kustomize build zarf/k8s/kind/database-pod | kubectl apply -f -
-	kubectl wagoit --namespace=database-system --timeout=120s --for=condition=Available deployment/database-pod
+	kubectl wait --namespace=database-system --timeout=120s --for=condition=Available deployment/database-pod
 	kustomize build zarf/k8s/kind/sales-pod | kubectl apply -f -
 
 kind-status:
