@@ -11,6 +11,8 @@ import (
 	"github.com/phi-lani/service3/business/sys/database"
 )
 
+// The content of the sql file are now embeded in these variables here.
+//This is done using the "embed" import and the init function is called to ensure that build tooling is able to make everything work.
 var (
 	//go:embed sql/schema.sql
 	schemaDoc string
